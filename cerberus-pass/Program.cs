@@ -1,16 +1,10 @@
 ﻿// Main UI-Flow
-using System.Runtime.CompilerServices;
 using cerberus_pass;
 
-// temp test für encryption
-var masterPassTest = "buxtehude";
-var secretText = "Hier könnte Ihr Feierabend stehen!";
-var encData = VaultEncryption.Encrypt(secretText, masterPassTest);
-Console.WriteLine(encData);
+PasswordManager manager = new();
 
-// test-end
-
-Console.ForegroundColor = ConsoleColor.DarkRed;
+Console.Clear();
+Console.ForegroundColor = ConsoleColor.Green;
 Console.WriteLine("Willkommen zu Cerberus-Pass!");
 Console.ResetColor();
 
@@ -44,8 +38,8 @@ if (!File.Exists(masterPassFilePath)) // first start
   var hashedPassword = VaultEncryption.HashPassword(userInput, out salt); // salt generieren -> neuer salt
   // create "masterpass.txt" and write hashed masterpass to it
   // File.Create(masterPassFilePath).Dispose();
-  File.WriteAllLines(masterPassFilePath,
-  new[] { hashedPassword, salt });
+  File.WriteAllLines(masterPassFilePath, new[] { hashedPassword, salt });
+  manager.LoadVault(userInput);
 }
 else // every other start
 {// "masterpass.txt" exists:
@@ -65,6 +59,7 @@ else // every other start
   )
   {
     Console.WriteLine("Master-Passwort korrekt! Anmeldung erfolgt...");
+    manager.LoadVault(userInput);
     Thread.Sleep(2000);
     Console.Clear();
   }
@@ -77,9 +72,6 @@ else // every other start
 }
 
 // Load PasswordEntries from file
-//manager.LoadFromFile();
-
-var manager = new PasswordManager();
 
 do
 {
@@ -117,52 +109,81 @@ do
       Console.WriteLine(entry + $"\t{entry.Password}");
       break;
     case MenuOptions.Create:
-      Console.WriteLine("Gebe einen Titel für den Eintrag an:");
-      var title = Console.ReadLine();
-      Console.WriteLine("Gebe einen Login für den Eintrag an:");
-      var login = Console.ReadLine();
-      Console.WriteLine("Gebe ein Passwort für den Eintrag an:");
-      var password = Console.ReadLine();
-      var newEntry = manager.CreateEntry(title, login, password);
-      if (newEntry is null)
       {
-        Console.WriteLine($"Eintrag mit {title} existiert bereits.\nWolltest du diesen Updaten? Oder erstelle einen neuen mit einem anderen Titel.");
+        // prompt master-pass check
+        var validMasterPass = PromptCheckMasterPass(
+          out string masterPassPlain);
+        if (!validMasterPass)
+        {
+          Console.WriteLine("Master-Passwort stimmt nicht überein, versuche es erneut.");
+          break;
+        }
+        Console.WriteLine("Gebe einen Titel für den Eintrag an:");
+        var title = Console.ReadLine();
+        Console.WriteLine("Gebe einen Login für den Eintrag an:");
+        var login = Console.ReadLine();
+        Console.WriteLine("Gebe ein Passwort für den Eintrag an:");
+        var password = Console.ReadLine();
+        var newEntry = manager.CreateEntry(masterPassPlain, title, login, password);
+        if (newEntry is null)
+        {
+          Console.WriteLine($"Eintrag mit {title} existiert bereits.\nWolltest du diesen Updaten? Oder erstelle einen neuen mit einem anderen Titel.");
+        }
+        else
+        {
+          Console.WriteLine("Neuer Eintrag erfolgreich erstellt:");
+          Console.WriteLine(newEntry); // Gibt Type aus;
+        }
+        break;
       }
-      else
-      {
-        Console.WriteLine("Neuer Eintrag erfolgreich erstellt:");
-        Console.WriteLine(newEntry); // Gibt Type aus;
-      }
-      break;
     case MenuOptions.Update:
-      Console.WriteLine("Welchen Eintrag willst du ändern? (Title):");
-      var title_to_change = Console.ReadLine();
-      Console.WriteLine(
-        "Gebe einen neuen Titel für den Eintrag an (Leer um nichts zu ändern):");
-      var new_title = Console.ReadLine();
-      Console.WriteLine(
-        "Gebe einen neuen Login für den Eintrag an (Leer um nichts zu ändern):");
-      var new_login = Console.ReadLine();
-      Console.WriteLine(
-        "Gebe ein neues Passwort für den Eintrag an (Leer um nichts zu ändern):");
-      var new_password = Console.ReadLine();
-      var oldEntry = manager.GetEntry(title_to_change);
-      var updatedEntry = manager.UpdateEntry(title_to_change, new PasswordEntry(
-        String.IsNullOrEmpty(new_title) ? oldEntry.Title : new_title,
-        String.IsNullOrEmpty(new_login) ? oldEntry.Login : new_login,
-        String.IsNullOrEmpty(new_password) ? oldEntry.Password : new_password
-      ));
-      Console.WriteLine($"Eintrag {updatedEntry.Title} wurde erfolgreich aktuallisiert.");
-      break;
-    case MenuOptions.Delete:
-      Console.WriteLine("Welchen Eintrag willst du Löschen? (Title):");
-      var titleToDelete = Console.ReadLine();
-      if (manager.DeleteEntry(titleToDelete))
-        Console.WriteLine($"Eintrag {titleToDelete} wurde erfolgreich entfernt");
-      else
+      {
+        // prompt master-pass check
+        var validMasterPass = PromptCheckMasterPass(
+          out string masterPassPlain);
+        if (!validMasterPass)
+        {
+          Console.WriteLine("Master-Passwort stimmt nicht überein, versuche es erneut.");
+          break;
+        }
+        Console.WriteLine("Welchen Eintrag willst du ändern? (Title):");
+        var title_to_change = Console.ReadLine();
         Console.WriteLine(
-          $"Fehler beim löschen des Eintrags: {titleToDelete} wurde nicht gefunden!");
-      break;
+          "Gebe einen neuen Titel für den Eintrag an (Leer um nichts zu ändern):");
+        var new_title = Console.ReadLine();
+        Console.WriteLine(
+          "Gebe einen neuen Login für den Eintrag an (Leer um nichts zu ändern):");
+        var new_login = Console.ReadLine();
+        Console.WriteLine(
+          "Gebe ein neues Passwort für den Eintrag an (Leer um nichts zu ändern):");
+        var new_password = Console.ReadLine();
+        var oldEntry = manager.GetEntry(title_to_change);
+        var updatedEntry = manager.UpdateEntry(masterPassPlain, title_to_change, new PasswordEntry(
+          String.IsNullOrEmpty(new_title) ? oldEntry.Title : new_title,
+          String.IsNullOrEmpty(new_login) ? oldEntry.Login : new_login,
+          String.IsNullOrEmpty(new_password) ? oldEntry.Password : new_password
+        ));
+        Console.WriteLine($"Eintrag {updatedEntry.Title} wurde erfolgreich aktuallisiert.");
+        break;
+      }
+    case MenuOptions.Delete:
+      {// prompt master-pass check
+        var validMasterPass = PromptCheckMasterPass(
+          out string masterPassPlain);
+        if (!validMasterPass)
+        {
+          Console.WriteLine("Master-Passwort stimmt nicht überein, versuche es erneut.");
+          break;
+        }
+        Console.WriteLine("Welchen Eintrag willst du Löschen? (Title):");
+        var titleToDelete = Console.ReadLine();
+        if (manager.DeleteEntry(masterPassPlain, titleToDelete))
+          Console.WriteLine($"Eintrag {titleToDelete} wurde erfolgreich entfernt");
+        else
+          Console.WriteLine(
+            $"Fehler beim löschen des Eintrags: {titleToDelete} wurde nicht gefunden!");
+        break;
+      }
     default:
       // Fehler anzeigen -> Eingabe-Hint (1-5)
       // Eingabe wiederholen
@@ -172,3 +193,14 @@ do
   Console.ReadKey();
   Console.Clear();
 } while (true);
+
+bool PromptCheckMasterPass(out string masterPassPlain)
+{
+  Console.WriteLine("Entsperre den Vault mit deinem Master-Password:");
+  masterPassPlain = Console.ReadLine();
+  var storedMasterPass = File.ReadAllLines(masterPassFilePath);
+  var storedHash = storedMasterPass[0];
+  var storedSalt = storedMasterPass[1];
+  var verified = VaultEncryption.VerifyPassword(masterPassPlain, storedHash, storedSalt);
+  return verified;
+}

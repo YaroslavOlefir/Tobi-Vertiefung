@@ -113,4 +113,53 @@ public static class VaultEncryption
   }
 
   // todo: Decrypt
+  public static string Decrypt(string encryptedText, string password)
+  {
+    byte[] encryptedData = Convert.FromBase64String(encryptedText);
+    // Extract components from data
+    // Salt[16] - IV [16] - CipherText [n]
+    byte[] salt = new byte[16];
+    byte[] iv = new byte[16];
+    byte[] cipherBytes = new byte[encryptedData.Length - salt.Length - iv.Length];
+    Buffer.BlockCopy(
+      encryptedData,
+      0,
+      salt,
+      0,
+      salt.Length
+    );
+    Buffer.BlockCopy(
+      encryptedData,
+      salt.Length,
+      iv,
+      0,
+      iv.Length
+    );
+    Buffer.BlockCopy(
+      encryptedData,
+      salt.Length + iv.Length,
+      cipherBytes,
+      0,
+      cipherBytes.Length
+    );
+    // Regenerate key from password and salt
+    var key = DeriveKeyFromPassword(password, salt);
+    // Encrypt data using regenerated key + iv
+    using (var aesAlg = Aes.Create())
+    {
+      aesAlg.Key = key;
+      aesAlg.IV = iv;
+      aesAlg.Mode = CipherMode.CBC;
+      aesAlg.Padding = PaddingMode.PKCS7;
+      using (var decryptor = aesAlg.CreateDecryptor())
+      {
+        var plainBytes = decryptor.TransformFinalBlock(
+          cipherBytes,
+          0,
+          cipherBytes.Length
+        );
+        return Encoding.UTF8.GetString(plainBytes);
+      }
+    }
+  }
 }

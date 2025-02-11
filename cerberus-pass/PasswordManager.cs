@@ -6,20 +6,10 @@ public class PasswordManager
 {
   private List<PasswordEntry>? vault;
   private const string vaultFilePath = "vault.cerberus";
-  public PasswordManager()
-  {
-    // vault = new List<PasswordEntry>();
-    // vault = new();
-    // vault = [];
-    if (File.Exists(vaultFilePath))
-      LoadVault();
-    else
-      vault = [];
-  }
-
   public List<PasswordEntry> GetAll() => vault;
 
   public PasswordEntry? CreateEntry(
+    string masterPass,
     string title,
     string login,
     string password,
@@ -38,7 +28,7 @@ public class PasswordManager
       note
     );
     vault.Add(newEntry);
-    SaveVault();
+    SaveVault(masterPass);
     return newEntry;
   }
 
@@ -46,14 +36,13 @@ public class PasswordManager
   public PasswordEntry GetEntry(string title) =>
     vault.Find(x => x.Title == title);
 
-
   // UpdateEntry
-  public PasswordEntry UpdateEntry(string titleToChange, PasswordEntry newEntry)
+  public PasswordEntry UpdateEntry(string masterPass, string titleToChange, PasswordEntry newEntry)
   {
     var indexToUpdate = vault.FindIndex(
       x => x.Title == titleToChange);
     vault[indexToUpdate] = newEntry;
-    SaveVault();
+    SaveVault(masterPass);
     return vault[indexToUpdate];
 
     // var entryToChange = vault.Find(x => x.Title == titleToChange);
@@ -61,33 +50,37 @@ public class PasswordManager
   }
 
   // DeleteEntry
-  public bool DeleteEntry(string titleToDelete)
+  public bool DeleteEntry(string masterPass, string titleToDelete)
   {
     var success = vault.RemoveAll(x => x.Title == titleToDelete) > 0;
     if (success)
-      SaveVault();
+      SaveVault(masterPass);
     return success;
   }
 
-  private void SaveVault()
+  private void SaveVault(string masterPass)
   {
-    var options = new JsonSerializerOptions
-    {
-      WriteIndented = true
-    };
-    var json = JsonSerializer.Serialize(
-      vault, options
-    );
-    File.WriteAllText(vaultFilePath, json);
+    var json = JsonSerializer.Serialize(vault);
+    var encryptedJson = VaultEncryption.Encrypt(json, masterPass);
+    File.WriteAllText(vaultFilePath, encryptedJson);
   }
 
   // Load from File
   // Wer callt diese Funktion?
-  private void LoadVault()
+  public void LoadVault(string masterPass)
   {
-    var json = File.ReadAllText(vaultFilePath);
-    vault = JsonSerializer.
-      Deserialize<List<PasswordEntry>>(json) ?? [];
+    var fileContent = File.Exists(vaultFilePath) ?
+      File.ReadAllText(vaultFilePath) :
+      "";
+    if (String.IsNullOrEmpty(fileContent))
+    {
+      File.Create(vaultFilePath).Dispose();
+      vault = [];
+      return;
+    }
+    var encryptedJson = fileContent;
+    var jsonPlain = VaultEncryption.Decrypt(encryptedJson, masterPass);
+    vault = JsonSerializer.Deserialize<List<PasswordEntry>>(jsonPlain) ?? [];
     // ?? => Null-Coalescing Operator
     // x = entweder ?? oder
     // ==> wenn "entweder" == null, dann ist x = "oder"

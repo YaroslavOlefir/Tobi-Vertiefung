@@ -5,6 +5,7 @@
 
 # personal ignores
 **/masterpass.txt
+**/vault.cerberus
 
 # dotenv files
 .env

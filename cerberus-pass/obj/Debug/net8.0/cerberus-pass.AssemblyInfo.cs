@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("cerberus-pass")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bb32252eee2c18eec5811a00317023bafb1be067")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a5f20472492c758de0198f8cd79729445c087821")]
 [assembly: System.Reflection.AssemblyProductAttribute("cerberus-pass")]
 [assembly: System.Reflection.AssemblyTitleAttribute("cerberus-pass")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

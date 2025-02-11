@@ -12,3 +12,4 @@ C:\Users\OlefirYaroslav\OneDrive - LG-Academy\Desktop\My\C# Vertiefung\Tobi-Vert
 C:\Users\OlefirYaroslav\OneDrive - LG-Academy\Desktop\My\C# Vertiefung\Tobi-Vertiefung\cerberus-pass\obj\Debug\net8.0\cerberus-pass.pdb
 C:\Users\OlefirYaroslav\OneDrive - LG-Academy\Desktop\My\C# Vertiefung\Tobi-Vertiefung\cerberus-pass\obj\Debug\net8.0\cerberus-pass.genruntimeconfig.cache
 C:\Users\OlefirYaroslav\OneDrive - LG-Academy\Desktop\My\C# Vertiefung\Tobi-Vertiefung\cerberus-pass\obj\Debug\net8.0\ref\cerberus-pass.dll
+C:\Users\OlefirYaroslav\OneDrive - LG-Academy\Desktop\My\C# Vertiefung\Tobi-Vertiefung\cerberus-pass\obj\Debug\net8.0\cerberus-pass.sourcelink.json
